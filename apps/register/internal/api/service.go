@@ -5,6 +5,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/SAY-5/govgate/apps/register/internal/checklist"
 	"github.com/SAY-5/govgate/apps/register/internal/register"
@@ -17,6 +18,7 @@ type Service struct {
 	store      store.Store
 	checklists map[string]*checklist.Checklist
 	def        string // default checklist name
+	now        func() time.Time
 }
 
 // NewService builds a service. The default checklist name is used when a
@@ -25,8 +27,12 @@ func NewService(st store.Store, checklists map[string]*checklist.Checklist, def 
 	if _, ok := checklists[def]; !ok {
 		return nil, fmt.Errorf("api: default checklist %q not loaded", def)
 	}
-	return &Service{store: st, checklists: checklists, def: def}, nil
+	return &Service{store: st, checklists: checklists, def: def, now: time.Now}, nil
 }
+
+// SetClock overrides the service clock. Used by tests to advance time past a
+// condition's due date without sleeping.
+func (s *Service) SetClock(now func() time.Time) { s.now = now }
 
 // SubmitInput is a tool submission plus optional reviewer judgments and an
 // explicit checklist choice.

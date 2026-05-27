@@ -23,10 +23,14 @@ func (s *Service) Handler(logger *slog.Logger) http.Handler {
 	mux.HandleFunc("GET /healthz", h.health)
 	mux.HandleFunc("POST /v1/submissions", h.submit)
 	mux.HandleFunc("GET /v1/register", h.list)
+	mux.HandleFunc("GET /v1/register/overdue", h.overdue)
 	mux.HandleFunc("GET /v1/register/{id}", h.get)
 	mux.HandleFunc("POST /v1/register/{id}/status", h.setStatus)
 	mux.HandleFunc("POST /v1/register/{id}/reassess", h.reassess)
 	mux.HandleFunc("GET /v1/register/{id}/history", h.history)
+	mux.HandleFunc("POST /v1/register/{id}/approve-with-conditions", h.approveWithConditions)
+	mux.HandleFunc("GET /v1/register/{id}/conditions", h.listConditions)
+	mux.HandleFunc("POST /v1/register/{id}/conditions/{cid}/satisfy", h.satisfyCondition)
 	return logging(logger, mux)
 }
 
@@ -123,6 +127,64 @@ func (h *handlers) history(w http.ResponseWriter, r *http.Request) {
 		records = []register.AssessmentRecord{}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"history": records})
+}
+
+func (h *handlers) overdue(w http.ResponseWriter, r *http.Request) {
+	entries, err := h.svc.Overdue(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if entries == nil {
+		entries = []register.OverdueEntry{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"overdue": entries})
+}
+
+type approveConditionsReq struct {
+	ReviewerNotes string           `json:"reviewer_notes"`
+	Conditions    []ConditionInput `json:"conditions"`
+}
+
+func (h *handlers) approveWithConditions(w http.ResponseWriter, r *http.Request) {
+	var req approveConditionsReq
+	if err := decode(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	entry, conds, err := h.svc.ApproveWithConditions(r.Context(), r.PathValue("id"), req.ReviewerNotes, req.Conditions)
+	if handleStoreErr(w, err) {
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"entry": entry, "conditions": conds})
+}
+
+func (h *handlers) listConditions(w http.ResponseWriter, r *http.Request) {
+	conds, err := h.svc.Conditions(r.Context(), r.PathValue("id"))
+	if handleStoreErr(w, err) {
+		return
+	}
+	if conds == nil {
+		conds = []register.Condition{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"conditions": conds})
+}
+
+type satisfyReq struct {
+	Evidence string `json:"evidence"`
+}
+
+func (h *handlers) satisfyCondition(w http.ResponseWriter, r *http.Request) {
+	var req satisfyReq
+	if err := decode(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	entry, cond, err := h.svc.SatisfyCondition(r.Context(), r.PathValue("id"), r.PathValue("cid"), req.Evidence)
+	if handleStoreErr(w, err) {
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"entry": entry, "condition": cond})
 }
 
 // --- helpers ---

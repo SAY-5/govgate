@@ -67,6 +67,24 @@ updated entry and a diff against the prior assessment. See
 
 Return every assessment the entry has received, oldest first (the audit trail).
 
+### `POST /v1/register/{id}/approve-with-conditions`
+
+Approve an entry and attach conditions with due dates. See
+[conditional-approval.md](conditional-approval.md).
+
+### `GET /v1/register/{id}/conditions`
+
+List the conditions attached to an entry.
+
+### `POST /v1/register/{id}/conditions/{cid}/satisfy`
+
+Record evidence closing a condition; transitions the entry to `fully-approved`
+once all conditions are satisfied.
+
+### `GET /v1/register/overdue`
+
+List entries with at least one unsatisfied condition past its due date.
+
 ## Storage
 
 Entries are stored in `register_entries`. The submission and assessment are kept

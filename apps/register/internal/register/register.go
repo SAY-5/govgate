@@ -44,6 +44,31 @@ type Entry struct {
 	UpdatedAt        time.Time          `json:"updated_at"`
 }
 
+// Condition is a requirement attached to a conditional approval, with a due
+// date and an optional satisfaction record.
+type Condition struct {
+	ID          string     `json:"id"`
+	EntryID     string     `json:"entry_id"`
+	Description string     `json:"description"`
+	DueAt       time.Time  `json:"due_at"`
+	Satisfied   bool       `json:"satisfied"`
+	Evidence    string     `json:"evidence,omitempty"`
+	SatisfiedAt *time.Time `json:"satisfied_at,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
+}
+
+// Overdue reports whether the condition is unsatisfied and past its due date as
+// of now.
+func (c Condition) Overdue(now time.Time) bool {
+	return !c.Satisfied && now.After(c.DueAt)
+}
+
+// OverdueEntry pairs a register entry with its overdue conditions.
+type OverdueEntry struct {
+	Entry      Entry       `json:"entry"`
+	Conditions []Condition `json:"overdue_conditions"`
+}
+
 // AssessmentRecord is one assessment a tool received at a point in time. The
 // sequence of records for an entry is the audit trail of how its risk changed
 // as checklist policy evolved.

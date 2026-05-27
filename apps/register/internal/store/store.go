@@ -3,6 +3,7 @@ package store
 
 import (
 	"context"
+	"time"
 
 	"github.com/SAY-5/govgate/apps/register/internal/register"
 )
@@ -25,6 +26,15 @@ type Store interface {
 	Reassess(ctx context.Context, id string, a register.AssessmentRecord) (register.Entry, error)
 	// History returns every assessment an entry has received, oldest first.
 	History(ctx context.Context, id string) ([]register.AssessmentRecord, error)
+	// AddConditions attaches approval conditions to an entry.
+	AddConditions(ctx context.Context, entryID string, conds []register.Condition) ([]register.Condition, error)
+	// Conditions returns all conditions attached to an entry.
+	Conditions(ctx context.Context, entryID string) ([]register.Condition, error)
+	// SatisfyCondition marks a condition satisfied with evidence at the given time.
+	SatisfyCondition(ctx context.Context, entryID, condID, evidence string, at time.Time) (register.Condition, error)
+	// Overdue returns entries with at least one unsatisfied condition past due as
+	// of now, each paired with its overdue conditions.
+	Overdue(ctx context.Context, now time.Time) ([]register.OverdueEntry, error)
 	// Close releases resources.
 	Close()
 }

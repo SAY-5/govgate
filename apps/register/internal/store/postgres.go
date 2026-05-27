@@ -70,6 +70,22 @@ CREATE TABLE IF NOT EXISTS assessment_history (
     created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_history_entry ON assessment_history (entry_id, created_at);
+
+-- Conditions attached to a conditional approval. A tool with all conditions
+-- satisfied transitions to fully-approved; unsatisfied conditions past their
+-- due date are surfaced as overdue.
+CREATE TABLE IF NOT EXISTS approval_conditions (
+    id            UUID PRIMARY KEY,
+    entry_id      UUID NOT NULL REFERENCES register_entries(id) ON DELETE CASCADE,
+    description   TEXT NOT NULL,
+    due_at        TIMESTAMPTZ NOT NULL,
+    satisfied     BOOLEAN NOT NULL DEFAULT FALSE,
+    evidence      TEXT NOT NULL DEFAULT '',
+    satisfied_at  TIMESTAMPTZ,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_conditions_entry ON approval_conditions (entry_id);
+CREATE INDEX IF NOT EXISTS idx_conditions_due ON approval_conditions (satisfied, due_at);
 `
 
 func (p *Postgres) migrate(ctx context.Context) error {
