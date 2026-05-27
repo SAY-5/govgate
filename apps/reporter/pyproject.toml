@@ -1,0 +1,45 @@
+[tool.poetry]
+name = "govgate-reporter"
+version = "0.1.0"
+description = "Report generation and LLM-assisted requirement extraction for GovGate"
+authors = ["Sai Asish Y <say.apm35@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{ include = "govgate_reporter", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pyyaml = "^6.0.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.0"
+pytest-cov = "^5.0.0"
+mypy = "^1.10.0"
+ruff = "^0.5.0"
+types-pyyaml = "^6.0.12"
+
+[tool.poetry.scripts]
+govgate-report = "govgate_reporter.cli:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src"]
+
+[tool.coverage.run]
+source = ["govgate_reporter"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]

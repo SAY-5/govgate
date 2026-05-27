@@ -1,0 +1,110 @@
+version: "1.0.0"
+name: default
+description: >-
+  Baseline AI tool intake checklist covering data handling, model provenance,
+  oversight, security, and vendor stability.
+
+# Per-category weights are normalized at load time; they describe the relative
+# contribution of each category to the overall weighted aggregate.
+categories:
+  - id: data_residency
+    weight: 2
+    requirements:
+      - id: dr.region_known
+        question: Is the data processing region documented?
+        weight: 1
+        severity: medium
+        auto_check: data_region_present
+      - id: dr.approved_region
+        question: Is data processed only in approved regions?
+        weight: 2
+        severity: high
+        auto_check: data_region_approved
+
+  - id: pii_handling
+    weight: 3
+    requirements:
+      - id: pii.declared
+        question: Does the submission declare whether PII is processed?
+        weight: 1
+        severity: medium
+        auto_check: pii_flag_declared
+      - id: pii.no_unmasked
+        question: Is unmasked PII kept out of the tool, or masked before send?
+        weight: 3
+        severity: critical
+        auto_check: pii_not_unmasked
+      - id: pii.dpa_signed
+        question: Is a data processing agreement in place with the vendor?
+        weight: 2
+        severity: high
+
+  - id: model_provenance
+    weight: 2
+    requirements:
+      - id: mp.family_known
+        question: Is the underlying model family disclosed?
+        weight: 1
+        severity: medium
+        auto_check: model_family_known
+      - id: mp.training_data
+        question: Is the model training-data provenance documented?
+        weight: 2
+        severity: high
+
+  - id: retention
+    weight: 2
+    requirements:
+      - id: ret.policy_declared
+        question: Is a data retention period declared?
+        weight: 1
+        severity: medium
+        auto_check: retention_declared
+      - id: ret.bounded
+        question: Is retention bounded to 90 days or less, or justified?
+        weight: 2
+        severity: high
+        auto_check: retention_bounded
+
+  - id: human_oversight
+    weight: 2
+    requirements:
+      - id: ho.human_in_loop
+        question: Is there human review of consequential outputs?
+        weight: 2
+        severity: high
+      - id: ho.appeal_path
+        question: Is there an appeal or override path for affected users?
+        weight: 1
+        severity: medium
+
+  - id: security
+    weight: 3
+    requirements:
+      - id: sec.encryption_transit
+        question: Is data encrypted in transit?
+        weight: 2
+        severity: high
+        auto_check: encryption_in_transit
+      - id: sec.subprocessors_known
+        question: Are third-party subprocessors enumerated?
+        weight: 1
+        severity: medium
+        auto_check: subprocessors_listed
+      - id: sec.no_unvetted_subproc
+        question: Are all subprocessors vetted (no unknown third parties)?
+        weight: 2
+        severity: high
+
+  - id: vendor_stability
+    weight: 1
+    requirements:
+      - id: vs.vendor_named
+        question: Is the vendor named and identifiable?
+        weight: 1
+        severity: low
+        auto_check: vendor_named
+      - id: vs.support_terms
+        question: Are support and SLA terms documented?
+        weight: 1
+        severity: low

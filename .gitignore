@@ -1,0 +1,23 @@
+# Go
+/apps/register/govgate
+/apps/register/bin/
+*.test
+*.out
+coverage.out
+coverage.txt
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+*.egg-info/
+
+# Local
+*.log
+.DS_Store
+/tmp-out/
