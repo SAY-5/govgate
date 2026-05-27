@@ -16,10 +16,17 @@ import (
 )
 
 // newTestStore spins up a throwaway Postgres container and returns an open
-// store plus a cleanup func.
+// store, registering cleanup on the test.
 func newTestStore(t *testing.T) *Postgres {
 	t.Helper()
-	ctx := context.Background()
+	return openContainerStore(context.Background(), t)
+}
+
+// openContainerStore starts a throwaway Postgres and opens a store against it,
+// registering termination/close cleanup. It accepts testing.TB so both tests
+// and benchmarks can use it.
+func openContainerStore(ctx context.Context, tb testing.TB) *Postgres {
+	tb.Helper()
 	ctr, err := tcpostgres.RunContainer(ctx,
 		testcontainers.WithImage("postgres:16-alpine"),
 		tcpostgres.WithDatabase("govgate"),
@@ -30,19 +37,19 @@ func newTestStore(t *testing.T) *Postgres {
 				WithOccurrence(2).WithStartupTimeout(60*time.Second)),
 	)
 	if err != nil {
-		t.Fatalf("start postgres: %v", err)
+		tb.Fatalf("start postgres: %v", err)
 	}
-	t.Cleanup(func() { _ = ctr.Terminate(ctx) })
+	tb.Cleanup(func() { _ = ctr.Terminate(ctx) })
 
 	dsn, err := ctr.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
-		t.Fatalf("connection string: %v", err)
+		tb.Fatalf("connection string: %v", err)
 	}
 	st, err := Open(ctx, dsn)
 	if err != nil {
-		t.Fatalf("open store: %v", err)
+		tb.Fatalf("open store: %v", err)
 	}
-	t.Cleanup(st.Close)
+	tb.Cleanup(st.Close)
 	return st
 }
 

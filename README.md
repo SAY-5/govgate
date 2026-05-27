@@ -93,6 +93,8 @@ make bench-regress # scoring + register throughput regression gate
 - [Scoring algorithm](docs/scoring.md)
 - [Register API](docs/register.md)
 - [Requirement extraction](docs/extraction.md)
+- [Worked examples and end-to-end flow](docs/examples.md)
+- [Benchmarks and regression gate](docs/benchmarks.md)
 - [Checklist versioning and re-assessment](docs/versioning.md)
 - [Conditional approval workflow](docs/conditional-approval.md)
 
