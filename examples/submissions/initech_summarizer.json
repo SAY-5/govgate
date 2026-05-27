@@ -1,0 +1,28 @@
+{
+  "submission": {
+    "name": "Initech Summarizer",
+    "vendor": "Initech",
+    "description": "A meeting-notes summarizer. Region eu-central-1, approved. PII is not processed because transcripts are anonymized upstream. Retention 14 days. Encryption in transit enabled. Model family disclosed (gpt-style). Does not train on customer data. Subprocessors listed and vetted. Human reviews summaries before distribution.",
+    "intended_use": "Generating draft summaries of internal meetings for an assigned note-taker to edit.",
+    "structured_fields": {
+      "data_region": "eu-central-1",
+      "approved_regions": ["eu-west-1", "eu-central-1"],
+      "processes_pii": false,
+      "pii_masked_before_send": true,
+      "model_family": "gpt-style",
+      "retention_days": 14,
+      "encryption_in_transit": true,
+      "subprocessors": ["cloud-host-b"],
+      "unvetted_subprocessors": [],
+      "trains_on_customer_data": false
+    }
+  },
+  "judgments": {
+    "pii.dpa_signed": "pass",
+    "mp.training_data": "pass",
+    "ho.human_in_loop": "pass",
+    "ho.appeal_path": "pass",
+    "sec.no_unvetted_subproc": "pass",
+    "vs.support_terms": "pass"
+  }
+}

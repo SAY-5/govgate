@@ -1,0 +1,28 @@
+{
+  "submission": {
+    "name": "Globex Vision API",
+    "vendor": "Globex",
+    "description": "An image-understanding API. Region is us-east-1 which is outside our approved set. Unmasked PII may appear in uploaded images. Retention is 365 days. Encryption in transit is enabled. The vendor trains on customer data by default. Model family undisclosed.",
+    "intended_use": "Automated triage of user-uploaded documents without human review.",
+    "structured_fields": {
+      "data_region": "us-east-1",
+      "approved_regions": ["eu-west-1", "eu-central-1"],
+      "processes_pii": true,
+      "pii_masked_before_send": false,
+      "model_family": "",
+      "retention_days": 365,
+      "encryption_in_transit": true,
+      "subprocessors": ["analytics-vendor", "unknown-cdn"],
+      "unvetted_subprocessors": ["unknown-cdn"],
+      "trains_on_customer_data": true
+    }
+  },
+  "judgments": {
+    "pii.dpa_signed": "fail",
+    "mp.training_data": "fail",
+    "ho.human_in_loop": "fail",
+    "ho.appeal_path": "fail",
+    "sec.no_unvetted_subproc": "fail",
+    "vs.support_terms": "unknown"
+  }
+}
