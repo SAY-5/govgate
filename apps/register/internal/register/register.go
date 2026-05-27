@@ -44,6 +44,28 @@ type Entry struct {
 	UpdatedAt        time.Time          `json:"updated_at"`
 }
 
+// AssessmentRecord is one assessment a tool received at a point in time. The
+// sequence of records for an entry is the audit trail of how its risk changed
+// as checklist policy evolved.
+type AssessmentRecord struct {
+	ID               string             `json:"id"`
+	ChecklistName    string             `json:"checklist_name"`
+	ChecklistVersion string             `json:"checklist_version"`
+	Assessment       scoring.Assessment `json:"assessment"`
+	CreatedAt        time.Time          `json:"created_at"`
+}
+
+// AssessmentDiff summarizes how the overall band changed between two
+// assessments of the same tool.
+type AssessmentDiff struct {
+	FromVersion  string       `json:"from_version"`
+	ToVersion    string       `json:"to_version"`
+	FromBand     scoring.Band `json:"from_band"`
+	ToBand       scoring.Band `json:"to_band"`
+	BandRose     bool         `json:"band_rose"`
+	NewCriticals []string     `json:"new_criticals"`
+}
+
 // Query filters the register listing. Empty fields are not constrained.
 type Query struct {
 	Status Status

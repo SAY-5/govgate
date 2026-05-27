@@ -45,6 +45,19 @@ categories:
 // using the provided checklists.
 func newServerWith(t *testing.T, checklists map[string]*checklist.Checklist, def string) *httptest.Server {
 	t.Helper()
+	st := openStore(t)
+	svc, err := NewService(st, checklists, def)
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := httptest.NewServer(svc.Handler(nil))
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+// openStore starts a throwaway Postgres and opens a store against it.
+func openStore(t *testing.T) store.Store {
+	t.Helper()
 	ctx := context.Background()
 	ctr, err := tcpostgres.RunContainer(ctx,
 		testcontainers.WithImage("postgres:16-alpine"),
@@ -68,14 +81,7 @@ func newServerWith(t *testing.T, checklists map[string]*checklist.Checklist, def
 		t.Fatal(err)
 	}
 	t.Cleanup(st.Close)
-
-	svc, err := NewService(st, checklists, def)
-	if err != nil {
-		t.Fatal(err)
-	}
-	srv := httptest.NewServer(svc.Handler(nil))
-	t.Cleanup(srv.Close)
-	return srv
+	return st
 }
 
 func TestSubmitFetchFlow(t *testing.T) {

@@ -25,6 +25,8 @@ func (s *Service) Handler(logger *slog.Logger) http.Handler {
 	mux.HandleFunc("GET /v1/register", h.list)
 	mux.HandleFunc("GET /v1/register/{id}", h.get)
 	mux.HandleFunc("POST /v1/register/{id}/status", h.setStatus)
+	mux.HandleFunc("POST /v1/register/{id}/reassess", h.reassess)
+	mux.HandleFunc("GET /v1/register/{id}/history", h.history)
 	return logging(logger, mux)
 }
 
@@ -102,6 +104,25 @@ func (h *handlers) setStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, entry)
+}
+
+func (h *handlers) reassess(w http.ResponseWriter, r *http.Request) {
+	entry, diff, err := h.svc.Reassess(r.Context(), r.PathValue("id"))
+	if handleStoreErr(w, err) {
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"entry": entry, "diff": diff})
+}
+
+func (h *handlers) history(w http.ResponseWriter, r *http.Request) {
+	records, err := h.svc.History(r.Context(), r.PathValue("id"))
+	if handleStoreErr(w, err) {
+		return
+	}
+	if records == nil {
+		records = []register.AssessmentRecord{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"history": records})
 }
 
 // --- helpers ---

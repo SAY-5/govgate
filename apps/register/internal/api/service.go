@@ -77,3 +77,69 @@ func (s *Service) SetStatus(ctx context.Context, id string, status register.Stat
 
 // Checklists returns the loaded checklist names.
 func (s *Service) Checklists() map[string]*checklist.Checklist { return s.checklists }
+
+// PublishChecklist registers a new checklist version and flags every entry
+// assessed under an older version of the same checklist as stale. It returns
+// the number of entries flagged.
+func (s *Service) PublishChecklist(ctx context.Context, c *checklist.Checklist) (int, error) {
+	s.checklists[c.Name] = c
+	if c.Name == "" {
+		return 0, fmt.Errorf("api: checklist name is required")
+	}
+	return s.store.MarkStale(ctx, c.Name, c.Version)
+}
+
+// Reassess re-scores an entry against the current version of its checklist,
+// records the new assessment in history, and returns the updated entry plus a
+// diff against the prior assessment.
+func (s *Service) Reassess(ctx context.Context, id string) (register.Entry, register.AssessmentDiff, error) {
+	entry, err := s.store.Get(ctx, id)
+	if err != nil {
+		return register.Entry{}, register.AssessmentDiff{}, err
+	}
+	c, ok := s.checklists[entry.ChecklistName]
+	if !ok {
+		return register.Entry{}, register.AssessmentDiff{}, fmt.Errorf("api: checklist %q no longer loaded", entry.ChecklistName)
+	}
+
+	prior := entry.Assessment
+	newAssessment := scoring.Score(c, entry.Submission, entry.Assessment.Judgments())
+	rec := register.AssessmentRecord{
+		ChecklistName:    c.Name,
+		ChecklistVersion: c.Version,
+		Assessment:       newAssessment,
+	}
+	updated, err := s.store.Reassess(ctx, id, rec)
+	if err != nil {
+		return register.Entry{}, register.AssessmentDiff{}, err
+	}
+	diff := register.AssessmentDiff{
+		FromVersion:  prior.ChecklistVersion,
+		ToVersion:    c.Version,
+		FromBand:     prior.OverallBand,
+		ToBand:       newAssessment.OverallBand,
+		BandRose:     newAssessment.OverallBand.Rank() > prior.OverallBand.Rank(),
+		NewCriticals: diffCriticals(prior.Criticals, newAssessment.Criticals),
+	}
+	return updated, diff, nil
+}
+
+// History returns the assessment audit trail for an entry, oldest first.
+func (s *Service) History(ctx context.Context, id string) ([]register.AssessmentRecord, error) {
+	return s.store.History(ctx, id)
+}
+
+// diffCriticals returns critical ids present in next but not in prior.
+func diffCriticals(prior, next []string) []string {
+	seen := map[string]bool{}
+	for _, c := range prior {
+		seen[c] = true
+	}
+	var added []string
+	for _, c := range next {
+		if !seen[c] {
+			added = append(added, c)
+		}
+	}
+	return added
+}

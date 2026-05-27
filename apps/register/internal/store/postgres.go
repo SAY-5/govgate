@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/SAY-5/govgate/apps/register/internal/register"
@@ -55,6 +56,20 @@ CREATE INDEX IF NOT EXISTS idx_register_status ON register_entries (status);
 CREATE INDEX IF NOT EXISTS idx_register_band   ON register_entries (overall_band);
 CREATE INDEX IF NOT EXISTS idx_register_vendor ON register_entries (vendor);
 CREATE INDEX IF NOT EXISTS idx_register_created ON register_entries (created_at DESC, id DESC);
+
+-- Every assessment a tool has ever received, oldest first by created_at. The
+-- newest row's payload mirrors register_entries.assessment; older rows form the
+-- audit trail of how a tool's risk changed across checklist versions.
+CREATE TABLE IF NOT EXISTS assessment_history (
+    id                 UUID PRIMARY KEY,
+    entry_id           UUID NOT NULL REFERENCES register_entries(id) ON DELETE CASCADE,
+    checklist_name     TEXT NOT NULL,
+    checklist_version  TEXT NOT NULL,
+    overall_band       TEXT NOT NULL,
+    assessment         JSONB NOT NULL,
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_history_entry ON assessment_history (entry_id, created_at);
 `
 
 func (p *Postgres) migrate(ctx context.Context) error {
@@ -67,7 +82,7 @@ func (p *Postgres) migrate(ctx context.Context) error {
 // Close releases the pool.
 func (p *Postgres) Close() { p.pool.Close() }
 
-// Insert persists a new entry.
+// Insert persists a new entry and records its first assessment in history.
 func (p *Postgres) Insert(ctx context.Context, e register.Entry) (register.Entry, error) {
 	if e.ID == "" {
 		e.ID = uuid.NewString()
@@ -80,19 +95,119 @@ func (p *Postgres) Insert(ctx context.Context, e register.Entry) (register.Entry
 	if err != nil {
 		return register.Entry{}, fmt.Errorf("store: marshal assessment: %w", err)
 	}
+
+	tx, err := p.pool.Begin(ctx)
+	if err != nil {
+		return register.Entry{}, fmt.Errorf("store: begin: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck // rollback after commit is a no-op
+
 	const q = `
 INSERT INTO register_entries
   (id, vendor, tool_name, checklist_name, checklist_version, overall_band, status, stale, reviewer_notes, submission, assessment)
 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
 RETURNING created_at, updated_at`
-	row := p.pool.QueryRow(ctx, q,
+	row := tx.QueryRow(ctx, q,
 		e.ID, e.Submission.Vendor, e.Submission.Name, e.ChecklistName, e.ChecklistVersion,
 		string(e.Assessment.OverallBand), string(e.Status), e.Stale, e.ReviewerNotes, subJSON, assJSON,
 	)
 	if err := row.Scan(&e.CreatedAt, &e.UpdatedAt); err != nil {
 		return register.Entry{}, fmt.Errorf("store: insert: %w", err)
 	}
+	if err := insertHistory(ctx, tx, e.ID, e.ChecklistName, e.ChecklistVersion, e.Assessment, assJSON); err != nil {
+		return register.Entry{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return register.Entry{}, fmt.Errorf("store: commit: %w", err)
+	}
 	return e, nil
+}
+
+// querier is satisfied by both *pgxpool.Pool and pgx.Tx.
+type querier interface {
+	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
+}
+
+func insertHistory(ctx context.Context, q querier, entryID, name, version string, a scoring.Assessment, assJSON []byte) error {
+	const hq = `
+INSERT INTO assessment_history (id, entry_id, checklist_name, checklist_version, overall_band, assessment)
+VALUES ($1,$2,$3,$4,$5,$6)`
+	if _, err := q.Exec(ctx, hq, uuid.NewString(), entryID, name, version, string(a.OverallBand), assJSON); err != nil {
+		return fmt.Errorf("store: insert history: %w", err)
+	}
+	return nil
+}
+
+// MarkStale flags entries whose checklist version differs from current.
+func (p *Postgres) MarkStale(ctx context.Context, checklistName, currentVersion string) (int, error) {
+	const q = `
+UPDATE register_entries SET stale = TRUE, updated_at = now()
+WHERE checklist_name = $1 AND checklist_version <> $2 AND stale = FALSE`
+	tag, err := p.pool.Exec(ctx, q, checklistName, currentVersion)
+	if err != nil {
+		return 0, fmt.Errorf("store: mark stale: %w", err)
+	}
+	return int(tag.RowsAffected()), nil
+}
+
+// Reassess replaces the live assessment, appends to history, and clears stale.
+func (p *Postgres) Reassess(ctx context.Context, id string, rec register.AssessmentRecord) (register.Entry, error) {
+	assJSON, err := json.Marshal(rec.Assessment)
+	if err != nil {
+		return register.Entry{}, fmt.Errorf("store: marshal assessment: %w", err)
+	}
+	tx, err := p.pool.Begin(ctx)
+	if err != nil {
+		return register.Entry{}, fmt.Errorf("store: begin: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck
+
+	const uq = `
+UPDATE register_entries
+SET checklist_name = $2, checklist_version = $3, overall_band = $4,
+    assessment = $5, stale = FALSE, updated_at = now()
+WHERE id = $1
+RETURNING id, checklist_name, checklist_version, status, stale, reviewer_notes,
+          submission, assessment, created_at, updated_at`
+	e, err := scanEntry(tx.QueryRow(ctx, uq, id, rec.ChecklistName, rec.ChecklistVersion,
+		string(rec.Assessment.OverallBand), assJSON), id)
+	if err != nil {
+		return register.Entry{}, err
+	}
+	if err := insertHistory(ctx, tx, id, rec.ChecklistName, rec.ChecklistVersion, rec.Assessment, assJSON); err != nil {
+		return register.Entry{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return register.Entry{}, fmt.Errorf("store: commit: %w", err)
+	}
+	return e, nil
+}
+
+// History returns every assessment an entry received, oldest first.
+func (p *Postgres) History(ctx context.Context, id string) ([]register.AssessmentRecord, error) {
+	const q = `
+SELECT id, checklist_name, checklist_version, assessment, created_at
+FROM assessment_history WHERE entry_id = $1 ORDER BY created_at ASC, id ASC`
+	rows, err := p.pool.Query(ctx, q, id)
+	if err != nil {
+		return nil, fmt.Errorf("store: history: %w", err)
+	}
+	defer rows.Close()
+	var out []register.AssessmentRecord
+	for rows.Next() {
+		var (
+			rec     register.AssessmentRecord
+			assJSON []byte
+		)
+		if err := rows.Scan(&rec.ID, &rec.ChecklistName, &rec.ChecklistVersion, &assJSON, &rec.CreatedAt); err != nil {
+			return nil, fmt.Errorf("store: history scan: %w", err)
+		}
+		if err := json.Unmarshal(assJSON, &rec.Assessment); err != nil {
+			return nil, fmt.Errorf("store: history unmarshal: %w", err)
+		}
+		out = append(out, rec)
+	}
+	return out, rows.Err()
 }
 
 // Get fetches one entry by id.

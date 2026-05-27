@@ -62,6 +62,21 @@ type Assessment struct {
 	Criticals        []string         `json:"critical_failures"` // requirement ids
 }
 
+// Judgments reconstructs the human/LLM judgments embedded in an assessment:
+// the outcomes of every non-auto requirement. This lets a tool be re-scored
+// against a new checklist version while preserving the original human input.
+func (a Assessment) Judgments() Judgments {
+	j := Judgments{}
+	for _, cat := range a.Categories {
+		for _, r := range cat.Results {
+			if !r.Auto {
+				j[r.ID] = r.Outcome
+			}
+		}
+	}
+	return j
+}
+
 // Score evaluates a submission against a checklist, applying auto-checks where
 // present and human/LLM judgments otherwise. The overall band is the weighted
 // aggregate gated by severity: any failed critical requirement caps the overall

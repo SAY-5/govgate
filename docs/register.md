@@ -57,6 +57,16 @@ Update review status and reviewer notes.
 Valid statuses: `pending`, `approved`, `rejected`, `needs-info`,
 `fully-approved`.
 
+### `POST /v1/register/{id}/reassess`
+
+Re-score an entry against the current version of its checklist. Returns the
+updated entry and a diff against the prior assessment. See
+[versioning.md](versioning.md).
+
+### `GET /v1/register/{id}/history`
+
+Return every assessment the entry has received, oldest first (the audit trail).
+
 ## Storage
 
 Entries are stored in `register_entries`. The submission and assessment are kept

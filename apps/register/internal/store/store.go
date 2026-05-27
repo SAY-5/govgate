@@ -17,6 +17,14 @@ type Store interface {
 	List(ctx context.Context, q register.Query) (register.Page, error)
 	// UpdateStatus changes the status and reviewer notes of an entry.
 	UpdateStatus(ctx context.Context, id string, status register.Status, notes string) (register.Entry, error)
+	// MarkStale flags every entry whose checklist version differs from current
+	// for the given checklist name, returning the count flagged.
+	MarkStale(ctx context.Context, checklistName, currentVersion string) (int, error)
+	// Reassess replaces an entry's live assessment, appends the new assessment
+	// to its history, and clears the stale flag.
+	Reassess(ctx context.Context, id string, a register.AssessmentRecord) (register.Entry, error)
+	// History returns every assessment an entry has received, oldest first.
+	History(ctx context.Context, id string) ([]register.AssessmentRecord, error)
 	// Close releases resources.
 	Close()
 }
