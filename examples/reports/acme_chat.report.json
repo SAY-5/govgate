@@ -1,0 +1,205 @@
+{
+  "categories": [
+    {
+      "band": "low",
+      "id": "data_residency",
+      "results": [
+        {
+          "auto": true,
+          "category": "data_residency",
+          "id": "dr.region_known",
+          "outcome": "pass",
+          "question": "Is the data processing region documented?",
+          "severity": "medium",
+          "weight": 1
+        },
+        {
+          "auto": true,
+          "category": "data_residency",
+          "id": "dr.approved_region",
+          "outcome": "pass",
+          "question": "Is data processed only in approved regions?",
+          "severity": "high",
+          "weight": 2
+        }
+      ],
+      "score": 1
+    },
+    {
+      "band": "low",
+      "id": "pii_handling",
+      "results": [
+        {
+          "auto": true,
+          "category": "pii_handling",
+          "id": "pii.declared",
+          "outcome": "pass",
+          "question": "Does the submission declare whether PII is processed?",
+          "severity": "medium",
+          "weight": 1
+        },
+        {
+          "auto": true,
+          "category": "pii_handling",
+          "id": "pii.no_unmasked",
+          "outcome": "pass",
+          "question": "Is unmasked PII kept out of the tool, or masked before send?",
+          "severity": "critical",
+          "weight": 3
+        },
+        {
+          "auto": false,
+          "category": "pii_handling",
+          "id": "pii.dpa_signed",
+          "outcome": "pass",
+          "question": "Is a data processing agreement in place with the vendor?",
+          "severity": "high",
+          "weight": 2
+        }
+      ],
+      "score": 1
+    },
+    {
+      "band": "low",
+      "id": "model_provenance",
+      "results": [
+        {
+          "auto": true,
+          "category": "model_provenance",
+          "id": "mp.family_known",
+          "outcome": "pass",
+          "question": "Is the underlying model family disclosed?",
+          "severity": "medium",
+          "weight": 1
+        },
+        {
+          "auto": false,
+          "category": "model_provenance",
+          "id": "mp.training_data",
+          "outcome": "pass",
+          "question": "Is the model training-data provenance documented?",
+          "severity": "high",
+          "weight": 2
+        }
+      ],
+      "score": 1
+    },
+    {
+      "band": "low",
+      "id": "retention",
+      "results": [
+        {
+          "auto": true,
+          "category": "retention",
+          "id": "ret.policy_declared",
+          "outcome": "pass",
+          "question": "Is a data retention period declared?",
+          "severity": "medium",
+          "weight": 1
+        },
+        {
+          "auto": true,
+          "category": "retention",
+          "id": "ret.bounded",
+          "outcome": "pass",
+          "question": "Is retention bounded to 90 days or less, or justified?",
+          "severity": "high",
+          "weight": 2
+        }
+      ],
+      "score": 1
+    },
+    {
+      "band": "low",
+      "id": "human_oversight",
+      "results": [
+        {
+          "auto": false,
+          "category": "human_oversight",
+          "id": "ho.human_in_loop",
+          "outcome": "pass",
+          "question": "Is there human review of consequential outputs?",
+          "severity": "high",
+          "weight": 2
+        },
+        {
+          "auto": false,
+          "category": "human_oversight",
+          "id": "ho.appeal_path",
+          "outcome": "pass",
+          "question": "Is there an appeal or override path for affected users?",
+          "severity": "medium",
+          "weight": 1
+        }
+      ],
+      "score": 1
+    },
+    {
+      "band": "low",
+      "id": "security",
+      "results": [
+        {
+          "auto": true,
+          "category": "security",
+          "id": "sec.encryption_transit",
+          "outcome": "pass",
+          "question": "Is data encrypted in transit?",
+          "severity": "high",
+          "weight": 2
+        },
+        {
+          "auto": true,
+          "category": "security",
+          "id": "sec.subprocessors_known",
+          "outcome": "pass",
+          "question": "Are third-party subprocessors enumerated?",
+          "severity": "medium",
+          "weight": 1
+        },
+        {
+          "auto": false,
+          "category": "security",
+          "id": "sec.no_unvetted_subproc",
+          "outcome": "pass",
+          "question": "Are all subprocessors vetted (no unknown third parties)?",
+          "severity": "high",
+          "weight": 2
+        }
+      ],
+      "score": 1
+    },
+    {
+      "band": "low",
+      "id": "vendor_stability",
+      "results": [
+        {
+          "auto": true,
+          "category": "vendor_stability",
+          "id": "vs.vendor_named",
+          "outcome": "pass",
+          "question": "Is the vendor named and identifiable?",
+          "severity": "low",
+          "weight": 1
+        },
+        {
+          "auto": false,
+          "category": "vendor_stability",
+          "id": "vs.support_terms",
+          "outcome": "pass",
+          "question": "Are support and SLA terms documented?",
+          "severity": "low",
+          "weight": 1
+        }
+      ],
+      "score": 1
+    }
+  ],
+  "checklist_name": "default",
+  "checklist_version": "1.0.0",
+  "critical_failures": [],
+  "overall_band": "low",
+  "overall_score": 1.0,
+  "recommended_conditions": [],
+  "tool_name": "Acme Chat Assistant",
+  "vendor": "Acme AI"
+}

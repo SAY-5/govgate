@@ -1,0 +1,235 @@
+{
+  "id": "",
+  "submission": {
+    "name": "Initech Summarizer",
+    "vendor": "Initech",
+    "description": "A meeting-notes summarizer. Region eu-central-1, approved. PII is not processed because transcripts are anonymized upstream. Retention 14 days. Encryption in transit enabled. Model family disclosed (gpt-style). Does not train on customer data. Subprocessors listed and vetted. Human reviews summaries before distribution.",
+    "intended_use": "Generating draft summaries of internal meetings for an assigned note-taker to edit.",
+    "structured_fields": {
+      "data_region": "eu-central-1",
+      "approved_regions": [
+        "eu-west-1",
+        "eu-central-1"
+      ],
+      "processes_pii": false,
+      "pii_masked_before_send": true,
+      "model_family": "gpt-style",
+      "retention_days": 14,
+      "encryption_in_transit": true,
+      "subprocessors": [
+        "cloud-host-b"
+      ],
+      "unvetted_subprocessors": [],
+      "trains_on_customer_data": false
+    }
+  },
+  "checklist_name": "default",
+  "checklist_version": "1.0.0",
+  "assessment": {
+    "checklist_name": "default",
+    "checklist_version": "1.0.0",
+    "overall_score": 1,
+    "overall_band": "low",
+    "categories": [
+      {
+        "id": "data_residency",
+        "score": 1,
+        "band": "low",
+        "results": [
+          {
+            "id": "dr.region_known",
+            "category": "data_residency",
+            "question": "Is the data processing region documented?",
+            "weight": 1,
+            "severity": "medium",
+            "auto": true,
+            "outcome": "pass"
+          },
+          {
+            "id": "dr.approved_region",
+            "category": "data_residency",
+            "question": "Is data processed only in approved regions?",
+            "weight": 2,
+            "severity": "high",
+            "auto": true,
+            "outcome": "pass"
+          }
+        ]
+      },
+      {
+        "id": "pii_handling",
+        "score": 1,
+        "band": "low",
+        "results": [
+          {
+            "id": "pii.declared",
+            "category": "pii_handling",
+            "question": "Does the submission declare whether PII is processed?",
+            "weight": 1,
+            "severity": "medium",
+            "auto": true,
+            "outcome": "pass"
+          },
+          {
+            "id": "pii.no_unmasked",
+            "category": "pii_handling",
+            "question": "Is unmasked PII kept out of the tool, or masked before send?",
+            "weight": 3,
+            "severity": "critical",
+            "auto": true,
+            "outcome": "pass"
+          },
+          {
+            "id": "pii.dpa_signed",
+            "category": "pii_handling",
+            "question": "Is a data processing agreement in place with the vendor?",
+            "weight": 2,
+            "severity": "high",
+            "auto": false,
+            "outcome": "pass"
+          }
+        ]
+      },
+      {
+        "id": "model_provenance",
+        "score": 1,
+        "band": "low",
+        "results": [
+          {
+            "id": "mp.family_known",
+            "category": "model_provenance",
+            "question": "Is the underlying model family disclosed?",
+            "weight": 1,
+            "severity": "medium",
+            "auto": true,
+            "outcome": "pass"
+          },
+          {
+            "id": "mp.training_data",
+            "category": "model_provenance",
+            "question": "Is the model training-data provenance documented?",
+            "weight": 2,
+            "severity": "high",
+            "auto": false,
+            "outcome": "pass"
+          }
+        ]
+      },
+      {
+        "id": "retention",
+        "score": 1,
+        "band": "low",
+        "results": [
+          {
+            "id": "ret.policy_declared",
+            "category": "retention",
+            "question": "Is a data retention period declared?",
+            "weight": 1,
+            "severity": "medium",
+            "auto": true,
+            "outcome": "pass"
+          },
+          {
+            "id": "ret.bounded",
+            "category": "retention",
+            "question": "Is retention bounded to 90 days or less, or justified?",
+            "weight": 2,
+            "severity": "high",
+            "auto": true,
+            "outcome": "pass"
+          }
+        ]
+      },
+      {
+        "id": "human_oversight",
+        "score": 1,
+        "band": "low",
+        "results": [
+          {
+            "id": "ho.human_in_loop",
+            "category": "human_oversight",
+            "question": "Is there human review of consequential outputs?",
+            "weight": 2,
+            "severity": "high",
+            "auto": false,
+            "outcome": "pass"
+          },
+          {
+            "id": "ho.appeal_path",
+            "category": "human_oversight",
+            "question": "Is there an appeal or override path for affected users?",
+            "weight": 1,
+            "severity": "medium",
+            "auto": false,
+            "outcome": "pass"
+          }
+        ]
+      },
+      {
+        "id": "security",
+        "score": 1,
+        "band": "low",
+        "results": [
+          {
+            "id": "sec.encryption_transit",
+            "category": "security",
+            "question": "Is data encrypted in transit?",
+            "weight": 2,
+            "severity": "high",
+            "auto": true,
+            "outcome": "pass"
+          },
+          {
+            "id": "sec.subprocessors_known",
+            "category": "security",
+            "question": "Are third-party subprocessors enumerated?",
+            "weight": 1,
+            "severity": "medium",
+            "auto": true,
+            "outcome": "pass"
+          },
+          {
+            "id": "sec.no_unvetted_subproc",
+            "category": "security",
+            "question": "Are all subprocessors vetted (no unknown third parties)?",
+            "weight": 2,
+            "severity": "high",
+            "auto": false,
+            "outcome": "pass"
+          }
+        ]
+      },
+      {
+        "id": "vendor_stability",
+        "score": 1,
+        "band": "low",
+        "results": [
+          {
+            "id": "vs.vendor_named",
+            "category": "vendor_stability",
+            "question": "Is the vendor named and identifiable?",
+            "weight": 1,
+            "severity": "low",
+            "auto": true,
+            "outcome": "pass"
+          },
+          {
+            "id": "vs.support_terms",
+            "category": "vendor_stability",
+            "question": "Are support and SLA terms documented?",
+            "weight": 1,
+            "severity": "low",
+            "auto": false,
+            "outcome": "pass"
+          }
+        ]
+      }
+    ],
+    "critical_failures": null
+  },
+  "status": "pending",
+  "reviewer_notes": "",
+  "stale_assessment": false,
+  "created_at": "0001-01-01T00:00:00Z",
+  "updated_at": "0001-01-01T00:00:00Z"
+}

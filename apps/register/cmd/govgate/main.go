@@ -26,6 +26,11 @@ func main() {
 			logger.Error("serve failed", "err", err)
 			os.Exit(1)
 		}
+	case "assess":
+		if err := assess(os.Args[2:]); err != nil {
+			logger.Error("assess failed", "err", err)
+			os.Exit(1)
+		}
 	case "benchregress":
 		if err := benchRegress(os.Args[2:]); err != nil {
 			logger.Error("benchregress failed", "err", err)
@@ -77,5 +82,5 @@ func envOr(key, def string) string {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: govgate <serve|benchregress> [flags]")
+	fmt.Fprintln(os.Stderr, "usage: govgate <serve|assess|benchregress> [flags]")
 }
