@@ -82,7 +82,7 @@ jobs:
           go test -coverprofile=coverage.out ./internal/checklist/... ./internal/scoring/...
           total=$(go tool cover -func=coverage.out | awk '/^total:/ {print substr($3,1,length($3)-1)}')
           echo "engine coverage: $total%"
-          awk -v t="$total" 'BEGIN { exit (t+0 >= 75) ? 0 : 1 }'
+          awk -v t="$total" 'BEGIN { exit (t+0 >= 80) ? 0 : 1 }'
 
   test-py:
     runs-on: ubuntu-latest
@@ -100,7 +100,7 @@ jobs:
       - run: pipx install poetry==1.8.3
       - run: poetry install
       - name: pytest with coverage gate
-        run: poetry run pytest --cov --cov-report=term-missing --cov-fail-under=85
+        run: poetry run pytest --cov --cov-report=term-missing --cov-fail-under=90
 
   test-integration:
     runs-on: ubuntu-latest
