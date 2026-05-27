@@ -4,7 +4,7 @@ ENV POETRY_VERSION=1.8.3 \
     PIP_NO_CACHE_DIR=1
 WORKDIR /app
 RUN pip install "poetry==${POETRY_VERSION}"
-COPY pyproject.toml ./
+COPY pyproject.toml poetry.lock ./
 COPY src ./src
 COPY README.md ./
 RUN poetry install --only main --no-interaction
