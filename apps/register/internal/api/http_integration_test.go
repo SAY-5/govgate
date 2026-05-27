@@ -22,6 +22,29 @@ import (
 
 func newServer(t *testing.T) *httptest.Server {
 	t.Helper()
+	cl, err := checklist.Load([]byte(`
+version: "1.0.0"
+name: default
+categories:
+  - id: security
+    weight: 1
+    requirements:
+      - id: sec.tls
+        question: tls?
+        weight: 1
+        severity: critical
+        auto_check: encryption_in_transit
+`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return newServerWith(t, map[string]*checklist.Checklist{"default": cl}, "default")
+}
+
+// newServerWith starts a throwaway Postgres and an httptest server backed by it,
+// using the provided checklists.
+func newServerWith(t *testing.T, checklists map[string]*checklist.Checklist, def string) *httptest.Server {
+	t.Helper()
 	ctx := context.Background()
 	ctr, err := tcpostgres.RunContainer(ctx,
 		testcontainers.WithImage("postgres:16-alpine"),
@@ -46,23 +69,7 @@ func newServer(t *testing.T) *httptest.Server {
 	}
 	t.Cleanup(st.Close)
 
-	cl, err := checklist.Load([]byte(`
-version: "1.0.0"
-name: default
-categories:
-  - id: security
-    weight: 1
-    requirements:
-      - id: sec.tls
-        question: tls?
-        weight: 1
-        severity: critical
-        auto_check: encryption_in_transit
-`))
-	if err != nil {
-		t.Fatal(err)
-	}
-	svc, err := NewService(st, map[string]*checklist.Checklist{"default": cl}, "default")
+	svc, err := NewService(st, checklists, def)
 	if err != nil {
 		t.Fatal(err)
 	}
